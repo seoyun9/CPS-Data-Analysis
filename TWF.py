@@ -31,7 +31,7 @@ def load_and_preprocess_data():
     
     # 2. [PWF용] 전력 (Power) = 토크 * 회전속도(rad/s)
     # 1 rpm = 2*pi/60 rad/s
-    df['Power [W]'] = df['Torque [Nm]'] * (df['Rotational speed [rpm]'] * (2 * np.pi / 60))
+    df['P]'] * (df['Rotational sower [W]'] = df['Torque [Nmpeed [rpm]'] * (2 * np.pi / 60))
     
     # 3. [OSF용] 과부하 (Strain) = 공구 마모 * 토크
     df['Strain [minNm]'] = df['Tool wear [min]'] * df['Torque [Nm]']
