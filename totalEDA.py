@@ -1,0 +1,39 @@
+import pandas as pd, numpy as np, os, zipfile
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+# 데이터 불러오기
+df = pd.read_csv("ai4i2020.csv", encoding="utf-8")
+
+# 파생변수 만들기 power랑 온도차이
+df["Temp_diff [K]"] = df["Process temperature [K]"] - df["Air temperature [K]"]
+df["Power"] = (2*np.pi/60) * df["Rotational speed [rpm]"] * df["Torque [Nm]"]
+
+# osf용 strain 변수 만들기 
+df["Variant"] = df["Type"]
+df["strain"] = df["Tool wear [min]"] * df["Torque [Nm]"]  
+
+labels = ["TWF","HDF","PWF","OSF","RNF"]
+
+def plot_type_distribution(label_col):
+    # Type(L/M/H) 분포: failure랑 non-failure
+    fail = df[df[label_col] == 1]
+    ok = df[df[label_col] == 0]
+    cats = ["L","M","H"] # 카테고리
+
+    fail_counts = fail["Type"].value_counts().reindex(cats).fillna(0)
+    ok_counts = ok["Type"].value_counts().reindex(cats).fillna(0)
+
+    x = np.arange(len(cats))
+    width = 0.38 # 이게 젤 깔끔
+
+    plt.figure(figsize=(6,4))
+    plt.bar(x - width/2, ok_counts/len(ok), width, label="non-failure share")
+    plt.bar(x + width/2, fail_counts/len(fail) if len(fail)>0 else 0, width, label="failure share")
+    plt.xticks(x, cats)
+    plt.ylabel("Proportion within group")
+    plt.title(f"{label_col}: Type distribution (failure vs non-failure)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
