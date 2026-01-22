@@ -155,3 +155,16 @@ def check_label_alignment():
     print(f"Alignment rate (Any_subfailure == Machine failure): {align_rate:.4f}")
     print("Mismatch counts:")
     print(mismatch.value_counts())
+
+# 실행 예시
+
+# check_label_alignment()
+
+# plot_TWF()
+# plot_HDF()
+# plot_PWF()
+# plot_RNF()
+
+# OSF 기본 비교 + Variant별 비교(로그축 옵션)
+# plot_OSF_basic()
+# plot_OSF_variants_all(logy=True)
