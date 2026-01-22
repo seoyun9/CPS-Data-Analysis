@@ -68,3 +68,90 @@ def plot_type_distribution(label_col):
         plt.legend()
         plt.tight_layout()
         plt.show()
+
+def plot_failure_bundle(label_col, features, bins=35):
+    """
+    1) Type 분포
+    2) features 각각에 대해 box + hist
+    """
+    plot_type_distribution(label_col)
+    for f in features:
+        plot_box(label_col, f)
+        plot_hist(label_col, f, bins=bins, density=True, logy=False)
+
+
+# 고장 별 시각화
+
+# --- TWF: Tool wear 중심 ---
+def plot_TWF(bins=35):
+    plot_failure_bundle("TWF", ["Tool wear [min]", "Power"], bins=bins)
+
+# --- HDF: Temp_diff + Torque ---
+def plot_HDF(bins=35):
+    plot_failure_bundle("HDF", ["Temp_diff [K]", "Torque [Nm]"], bins=bins)
+
+# --- PWF: Torque + Power (요청 반영) ---
+def plot_PWF(bins=35):
+    plot_failure_bundle("PWF", ["Torque [Nm]", "Power"], bins=bins)
+
+# --- RNF: 온도 쪽(설명력 약하지만 편향 확인용) ---
+def plot_RNF(bins=35):
+    plot_failure_bundle("RNF", ["Air temperature [K]", "Process temperature [K]"], bins=bins)
+
+
+# OSF: strain + Variant별 비교(고장/비고장 같이)
+
+
+def plot_OSF_basic(bins=35):
+    # OSF 자체도 묶음으로 기본 비교
+    plot_failure_bundle("OSF", ["strain", "Torque [Nm]"], bins=bins)
+
+def plot_OSF_by_variant(variant, bins=40, logy=False):
+    """
+    Variant별로 나눠서, OSF 고장/비고장을 같이 비교 (strain)
+    """
+    ok = df[(df["Variant"]==variant) & (df["OSF"]==0)]["strain"].astype(float)
+    fail = df[(df["Variant"]==variant) & (df["OSF"]==1)]["strain"].astype(float)
+
+    # 히스토그램(겹치기)
+    plt.figure(figsize=(7,5))
+    plt.hist(ok, bins=bins, density=True, alpha=0.6, label="non-failure (OSF=0)")
+    plt.hist(fail, bins=bins, density=True, alpha=0.6, label="failure (OSF=1)")
+    if logy:
+        plt.yscale("log")
+        plt.ylabel("Density (log scale)")
+        plt.title(f"Variant {variant}: strain (OSF=0 vs OSF=1, log y)")
+    else:
+        plt.ylabel("Density")
+        plt.title(f"Variant {variant}: strain (OSF=0 vs OSF=1)")
+    plt.xlabel("strain = Tool wear × Torque")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # 박스플롯
+    plt.figure(figsize=(6,4))
+    plt.boxplot([ok, fail], labels=["non-failure", "failure"], showfliers=False)
+    plt.ylabel("strain = Tool wear × Torque")
+    plt.title(f"Variant {variant}: strain (boxplot)")
+    plt.tight_layout()
+    plt.show()
+
+def plot_OSF_variants_all(bins=40, logy=False):
+    for v in ["L","M","H"]:
+        plot_OSF_by_variant(v, bins=bins, logy=logy)
+
+
+# label alignment check
+
+def check_label_alignment():
+    """
+    세부고장(OR)과 Machine failure 라벨이 완전히 일치하는지 확인
+    """
+    df_tmp = df.copy()
+    df_tmp["Any_subfailure"] = (df_tmp[labels].sum(axis=1) > 0).astype(int)
+    align_rate = (df_tmp["Any_subfailure"] == df_tmp["Machine failure"]).mean()
+    mismatch = df_tmp[df_tmp["Any_subfailure"] != df_tmp["Machine failure"]][["Machine failure","Any_subfailure"]]
+    print(f"Alignment rate (Any_subfailure == Machine failure): {align_rate:.4f}")
+    print("Mismatch counts:")
+    print(mismatch.value_counts())
